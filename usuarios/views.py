@@ -10,15 +10,21 @@ def cadastro(request):
         senha = request.POST['password']
         senha2 = request.POST['password2']
 
-        if not nome.strip():
+        if campo_vazio(nome):
+            messages.error(request, 'o campo nome não pode ficar em branco')
             return redirect('cadastro')
-        if not email.strip():
+        if campo_vazio(email):
+            messages.error(request, 'o campo e-mail não pode ficar em branco')
             return redirect('cadastro')
-        if senha != senha2:
+        if senhas_nao_sao_iguais(senha, senha2):
             messages.error(request, 'As senhas não são iguais')
             return redirect('cadastro')
         if User.objects.filter(email=email).exists():
-            print("usuário já cadastrado")
+            messages.error(request, "usuário já cadastrado")
+            return redirect('cadastro')
+        if User.objects.filter(username=nome).exists():
+            messages.error(request, "usuário já cadastrado")
+            return redirect('cadastro')
 
         user = User.objects.create_user(username=nome, email=email, password=senha)
         user.save()
@@ -31,17 +37,14 @@ def login(request):
     if request.method == 'POST':
         email = request.POST['email']
         senha = request.POST['senha']
-        if email == '' or senha == '':
-            print("os campos usuário ou senha estão vazios")
+        if campo_vazio(email) or campo_vazio(senha):
+            messages.error(request, "os campos usuário ou senha estão vazios")
             return redirect('login')
-
-        print(email, senha)
         if User.objects.filter(email=email).exists():
             nome = User.objects.filter(email=email).values_list('username', flat= True).get()
             user = auth.authenticate(request, username=nome, password=senha )
             if user is not None:
                 auth.login(request, user)
-                print("login feito ")
                 return redirect('dashboard')
     return render(request, 'usuarios/login.html')
 
@@ -80,3 +83,10 @@ def cria_receita(request):
         return redirect('dashboard')
     else:
         return render(request, 'usuarios/cria_receita.html')
+
+
+def campo_vazio(campo):
+    return not campo.strip()
+
+def senhas_nao_sao_iguais(senha, senha2):
+    return senha != senha2
