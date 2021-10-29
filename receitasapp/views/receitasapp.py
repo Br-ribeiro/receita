@@ -1,7 +1,9 @@
+from django.core import paginator
 from django.shortcuts import render, get_list_or_404, get_object_or_404, redirect
 from receitasapp.models import Receita
 from django.contrib.auth.models import  User
 from django.contrib  import  auth, messages
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 
 # Create your views here.
@@ -9,9 +11,12 @@ from django.contrib  import  auth, messages
 def index(request):
 
     receitas = Receita.objects.order_by('-date_receita').filter(publicada=True)
+    paginator = Paginator(receitas, 3)
+    page = request.GET.get('page')
+    receita_por_pagina = paginator.get_page(page)
 
     dados = {
-        'receitas' : receitas
+        'receitas' : receita_por_pagina
     }
     return render(request,'receitas/index.html',dados)
 
@@ -20,7 +25,6 @@ def receita(request,  receita_id):
 
     receita_a_exibir = {'receita': receita}
     return render(request,'receitas/receita.html', receita_a_exibir)
-
 
 def cria_receita(request):
     if request.method == 'POST':
